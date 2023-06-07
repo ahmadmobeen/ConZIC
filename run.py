@@ -11,6 +11,8 @@ from gen_utils import generate_caption
 from control_gen_utils import control_generate_caption
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 from torch.utils.data import Dataset, DataLoader
+import nltk
+nltk.download()
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -62,7 +64,7 @@ def get_args():
     ## Models and Paths
     parser.add_argument("--lm_model", type=str, default='bert-base-uncased',
                         help="Path to language model") # bert,roberta
-    parser.add_argument("--match_model", type=str, default='clip-vit-base-patch32',
+    parser.add_argument("--match_model", type=str, default='openai/clip-vit-base-patch32',
                         help="Path to Image-Text model")  # clip,align
     parser.add_argument("--caption_img_path", type=str, default='./examples/',
                         help="file path of images for captioning")
@@ -165,7 +167,7 @@ if __name__ == "__main__":
             return img, img_name
         def __len__(self):
             return len(self.img_name_list)
-    
+
     def collate_img(batch_data):
         img_path_batch_list = list()
         name_batch_list = list()
@@ -173,7 +175,7 @@ if __name__ == "__main__":
             img_path_batch_list.append(unit[0])
             name_batch_list.append(unit[1])
         return img_path_batch_list,name_batch_list
-    
+
     img_data = Imgdata(img_dir)
     train_loader = DataLoader(img_data, batch_size=args.batch_size, collate_fn=collate_img, shuffle=False, drop_last=True)
 
@@ -217,6 +219,6 @@ if __name__ == "__main__":
                 else:
                     cur_json_file = os.path.join(save_dir,f"best_clipscore.json")
                     with open(cur_json_file,'w') as _json:
-                        json.dump(all_results[iter_id], _json)        
+                        json.dump(all_results[iter_id], _json)
 
 

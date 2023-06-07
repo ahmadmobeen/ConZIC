@@ -2,9 +2,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import random
-from utils import get_init_text, update_token_mask
-from sentiments_classifer import batch_texts_POS_Sentiments_analysis
-from POS_classifier import batch_texts_POS_analysis
+from baselines.ConZIC.utils import get_init_text, update_token_mask
+from baselines.ConZIC.sentiments_classifer import batch_texts_POS_Sentiments_analysis
+from baselines.ConZIC.POS_classifier import batch_texts_POS_analysis
 
 import time
 
@@ -49,7 +49,7 @@ def sentiment_sequential_generation(img_name, model, clip, tokenizer,image_insta
             probs, idxs = generate_caption_step(out, gen_idx=seed_len + ii,mask=token_mask, top_k=top_k, temperature=temperature)
             topk_inp = inp_.unsqueeze(1).repeat(1,top_k,1)
             idxs_ = (idxs * token_mask[0][idxs]).long()
-            topk_inp[:,:,ii + seed_len] = idxs_ 
+            topk_inp[:,:,ii + seed_len] = idxs_
             repeats = ((idxs_[:,:, None] == topk_inp).float().sum(2) - 1)
             topk_inp_batch = topk_inp.view(-1,topk_inp.shape[-1])
             batch_text_list= tokenizer.batch_decode(topk_inp_batch , skip_special_tokens=True)
@@ -65,7 +65,7 @@ def sentiment_sequential_generation(img_name, model, clip, tokenizer,image_insta
             senti_score_sequence_batch = current_senti_score.cpu().detach().numpy().tolist()
         if verbose and np.mod(iter_num + 1, 1) == 0:
             for_print_batch = tokenizer.batch_decode(inp)
-            cur_text_batch= tokenizer.batch_decode(inp,skip_special_tokens=True)            
+            cur_text_batch= tokenizer.batch_decode(inp,skip_special_tokens=True)
             for jj in range(batch_size):
                 if best_clip_score_list[jj] < clip_score_sequence_batch[jj]:
                     best_clip_score_list[jj] = clip_score_sequence_batch[jj]
@@ -109,7 +109,7 @@ def sentiment_shuffle_generation(img_name, model, clip, tokenizer,image_instance
             topk_inp_batch = topk_inp.view(-1,topk_inp.shape[-1])
             batch_text_list= tokenizer.batch_decode(topk_inp_batch , skip_special_tokens=True)
             sentiment_probs_batch, sentiment_scores_batch, pos_tags, wordnet_pos_tags = batch_texts_POS_Sentiments_analysis(
-                    batch_text_list, 1, topk_inp.device, sentiment_ctl=ctl_signal,  batch_size_image = batch_size) 
+                    batch_text_list, 1, topk_inp.device, sentiment_ctl=ctl_signal,  batch_size_image = batch_size)
             clip_score, clip_ref = clip.compute_image_text_similarity_via_raw_text(image_embeds, batch_text_list)
             final_score = alpha * probs + beta * clip_score + gamma * sentiment_probs_batch + 0.1 * (1-torch.exp(repeats))
             best_clip_id = final_score.argmax(dim=1).view(-1,1)
@@ -117,10 +117,10 @@ def sentiment_shuffle_generation(img_name, model, clip, tokenizer,image_instance
             current_clip_score = clip_ref.gather(1,best_clip_id).squeeze(-1)
             current_senti_score = sentiment_scores_batch.gather(1, best_clip_id).squeeze(-1)
             clip_score_sequence_batch = current_clip_score.cpu().detach().numpy().tolist()
-            senti_score_sequence_batch = current_senti_score.cpu().detach().numpy().tolist() 
+            senti_score_sequence_batch = current_senti_score.cpu().detach().numpy().tolist()
         if verbose and np.mod(iter_num + 1, 1) == 0:
             for_print_batch = tokenizer.batch_decode(inp)
-            cur_text_batch= tokenizer.batch_decode(inp,skip_special_tokens=True)            
+            cur_text_batch= tokenizer.batch_decode(inp,skip_special_tokens=True)
             for jj in range(batch_size):
                 if best_clip_score_list[jj] < clip_score_sequence_batch[jj]:
                     best_clip_score_list[jj] = clip_score_sequence_batch[jj]
@@ -176,10 +176,10 @@ def POS_sequential_generation(img_name, model, clip, tokenizer,image_instance,to
             for i in range(batch_size):
                 pos_tags_sequence_batch.append(pos_tags[be_clip_id_batch[i]+i*top_k])
             clip_score_sequence_batch = current_clip_score.cpu().detach().numpy().tolist()
-            ctl_score_sequence_batch = current_ctl_score.cpu().detach().numpy().tolist()                     
+            ctl_score_sequence_batch = current_ctl_score.cpu().detach().numpy().tolist()
         if verbose and np.mod(iter_num + 1, 1) == 0:
             for_print_batch = tokenizer.batch_decode(inp)
-            cur_text_batch= tokenizer.batch_decode(inp,skip_special_tokens=True)            
+            cur_text_batch= tokenizer.batch_decode(inp,skip_special_tokens=True)
             for jj in range(batch_size):
                 if best_clip_score_list[jj] < clip_score_sequence_batch[jj]:
                     best_clip_score_list[jj] = clip_score_sequence_batch[jj]

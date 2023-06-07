@@ -3,6 +3,7 @@ import os
 import colorlog
 import random
 import torch
+import csv
 
 
 def create_logger(folder, filename):
@@ -72,3 +73,10 @@ def format_output(sample_num, FinalCaption, BestCaption):
     else:
         return f"{FinalCaption[0]}\n{FinalCaption[1]}\n{FinalCaption[2]}\n{FinalCaption[3]}\n{FinalCaption[4]}",\
             f"{BestCaption[0]}\n{BestCaption[1]}\n{BestCaption[2]}\n{BestCaption[3]}\n{BestCaption[4]}"
+
+def write_csv(img_name, cap, clip_score, file):
+    field_names = ["cid", "caption", "clip_score"]
+    data = {"cid": img_name, "caption": cap, "clip_score": clip_score}
+    with open(file, 'a') as f:
+        writer = csv.DictWriter(f, fieldnames=field_names)
+        writer.writerow(data)
